@@ -19,7 +19,6 @@ class MQTTDoorbell {
   private readonly service: Service;
   private readonly sensorService: Service;
 
-
   private readonly stateCharacteristic: Characteristic;
   private readonly sensorStateCharacteristic: Characteristic;
 
@@ -40,7 +39,7 @@ class MQTTDoorbell {
     this.service = new hap.Service.Doorbell(config.name);
     this.stateCharacteristic = this.service.getCharacteristic(this.Characteristic.ProgrammableSwitchEvent);
 
-    this.sensorService = new hap.Service.OccupancySensor(config.name);
+    this.sensorService = new hap.Service.OccupancySensor(config.name + ' Sensor');
     this.sensorStateCharacteristic = this.sensorService
       .getCharacteristic(this.Characteristic.OccupancyDetected)
       .onGet(this.handleOccupancyDetectedGet.bind(this));
