@@ -26,7 +26,7 @@ npm install --global @nzws/homebridge-mqtt-doorbell
 
 - `mqtt`: MQTT Broker address (required)
 - `topic`: Subscribe topic (required)
-- `enableOccupancySensor`: Register Doorbell service (default: true)
+- `enableDoorbell`: Register Doorbell service (default: true)
   - You can use the notification by HomePod
 - `enableOccupancySensor`: Register OccupancySensor service (default: true)
   - You can use the automation etc
