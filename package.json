@@ -1,7 +1,7 @@
 {
   "displayName": "Homemade MQTT Doorbell Plugin",
   "name": "@nzws/homebridge-mqtt-doorbell",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Homebridge Plugin for homemade doorbell with mqtt",
   "license": "Apache-2.0",
   "publishConfig": {

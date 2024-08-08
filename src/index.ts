@@ -12,14 +12,19 @@ class MQTTDoorbell {
   private readonly log: Logging;
   private readonly config: AccessoryConfig;
   private readonly api: API;
-  private readonly Service;
-  private readonly Characteristic;
+  private readonly Service: API['hap']['Service'];
+  private readonly Characteristic: API['hap']['Characteristic'];
 
-  private readonly stateCharacteristic: Characteristic;
   private readonly informationService: Service;
   private readonly service: Service;
+  private readonly sensorService: Service;
+
+
+  private readonly stateCharacteristic: Characteristic;
+  private readonly sensorStateCharacteristic: Characteristic;
 
   private readonly client: mqtt.MqttClient;
+  private state = false;
 
   /**
    * REQUIRED - This is the entry point to your plugin
@@ -33,8 +38,12 @@ class MQTTDoorbell {
     this.Characteristic = this.api.hap.Characteristic;
 
     this.service = new hap.Service.Doorbell(config.name);
-
     this.stateCharacteristic = this.service.getCharacteristic(this.Characteristic.ProgrammableSwitchEvent);
+
+    this.sensorService = new hap.Service.OccupancySensor(config.name);
+    this.sensorStateCharacteristic = this.sensorService
+      .getCharacteristic(this.Characteristic.OccupancyDetected)
+      .onGet(this.handleOccupancyDetectedGet.bind(this));
 
     this.informationService = new this.Service.AccessoryInformation()
       .setCharacteristic(this.Characteristic.Manufacturer, 'nzws.me')
@@ -49,11 +58,13 @@ class MQTTDoorbell {
 
     this.client.subscribe(subscribeTopic);
 
-    this.client.on('message', topic => {
+    this.client.on('message', (topic, data) => {
       this.log.debug(topic);
-      if (topic === subscribeTopic) {
-        this.ring();
+      if (topic !== subscribeTopic) {
+        return;
       }
+
+      this.handleMessage(data.toString());
     });
   }
 
@@ -62,12 +73,29 @@ class MQTTDoorbell {
    * This method must be named "getServices".
    */
   getServices() {
-    return [this.informationService, this.service];
+    return [this.informationService, this.service, this.sensorService];
   }
 
-  ring() {
+  private handleMessage(data: string) {
+    this.log.debug('Received message:', data.toString());
+    const isRinging = ['1', 'true', 'ring'].includes(data);
+    this.state = isRinging;
+
+    this.sensorStateCharacteristic.updateValue(this.handleOccupancyDetectedGet());
+    if (isRinging) {
+      this.ring();
+    }
+  }
+
+  private handleOccupancyDetectedGet() {
+    const { OCCUPANCY_NOT_DETECTED, OCCUPANCY_DETECTED } = this.Characteristic.OccupancyDetected;
+    return this.state ? OCCUPANCY_DETECTED : OCCUPANCY_NOT_DETECTED;
+  }
+
+  private ring() {
     this.log.info('Ring!');
 
-    this.stateCharacteristic.setValue(1);
+    const { SINGLE_PRESS } = this.Characteristic.ProgrammableSwitchEvent;
+    this.stateCharacteristic.updateValue(SINGLE_PRESS);
   }
 }
